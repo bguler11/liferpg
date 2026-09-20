@@ -51,13 +51,14 @@ Buradaki **Ayar > YEDEK / TAŞIMA** kutusuna yapıştır > **İÇE AKTAR**. Seri
 | `npm run dev` | Geliştirme sunucusu |
 | `npm test` | Oyun mantığı + arayüz duman testleri |
 | `npm run build` | Tip kontrolü + üretim derlemesi |
-| `npm run deploy` | Build + Firebase deploy |
+| `npm run deploy` | Build + Firebase deploy (hosting + kurallar + index) |
 | `python3 scripts/make-icons.py` | PWA ikonlarını yeniden üretir |
 | `node tools/send-reminders.mjs --dry-run` | Hatırlatmanın kime gideceğini gösterir (gönderme yok) |
 
 ## Yapı
 
 ```
+firestore.indexes.json  koleksiyon-grubu index'i (hatırlatma sorgusu için şart)
 src/logic.ts        oyun kuralları (saf fonksiyonlar)
 src/store.ts        Firebase Auth + Firestore canlı senkron (çevrimdışı önbellekli)
 src/sprite.ts       seviyeye göre değişen pixel karakter

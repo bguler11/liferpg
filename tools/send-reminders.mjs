@@ -22,7 +22,20 @@ if (!raw) {
   console.error('FIREBASE_SERVICE_ACCOUNT yok.');
   process.exit(1);
 }
-initializeApp({ credential: cert(JSON.parse(raw)) });
+let creds;
+try {
+  creds = JSON.parse(raw);
+} catch {
+  console.error('FIREBASE_SERVICE_ACCOUNT geçerli JSON değil. Secret olarak indirdiğin dosyanın tamamını yapıştır.');
+  process.exit(1);
+}
+for (const k of ['project_id', 'client_email', 'private_key']) {
+  if (!creds[k]) {
+    console.error(`Servis hesabı JSON'unda "${k}" yok. Yanlış dosya olabilir.`);
+    process.exit(1);
+  }
+}
+initializeApp({ credential: cert(creds) });
 const db = getFirestore();
 
 /** Verilen saat diliminde "şimdi": YYYY-MM-DD ve 0-23 saat. */
@@ -74,7 +87,15 @@ function message(st, name) {
   return { title: `Gün ${st.dayNum} · ${st.left.length} görev kaldı`, body: `${list}. Şimdi kapatırsan gün TAMAM.` };
 }
 
-const snap = await db.collectionGroup('push').where('enabled', '==', true).get();
+let snap;
+try {
+  snap = await db.collectionGroup('push').where('enabled', '==', true).get();
+} catch (e) {
+  if (String(e).includes('FAILED_PRECONDITION')) {
+    console.error('Firestore index eksik. Depo kökünde: npx firebase-tools deploy --only firestore:indexes');
+  }
+  throw e;
+}
 console.log(`${snap.size} cihaz kaydı bulundu.`);
 
 let sent = 0, skipped = 0, dropped = 0;

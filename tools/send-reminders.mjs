@@ -91,10 +91,18 @@ let snap;
 try {
   snap = await db.collectionGroup('push').where('enabled', '==', true).get();
 } catch (e) {
-  if (String(e).includes('FAILED_PRECONDITION')) {
-    console.error('Firestore index eksik. Depo kökünde: npx firebase-tools deploy --only firestore:indexes');
+  const msg = String(e?.details || e?.message || e);
+  if (msg.includes('not ready yet')) {
+    // Index daha kuruluyor; saat başı tekrar denenecek, hata sayılmaz.
+    console.log("Firestore index'i hâlâ oluşturuluyor. Bir sonraki çalıştırmada devam eder.");
+    process.exit(0);
   }
-  throw e;
+  if (msg.includes('FAILED_PRECONDITION')) {
+    console.error('Firestore index eksik. Depo kökünde: npx firebase-tools deploy --only firestore:indexes');
+    process.exit(1);
+  }
+  console.error('Firestore okunamadı: ' + msg.slice(0, 300));
+  process.exit(1);
 }
 console.log(`${snap.size} cihaz kaydı bulundu.`);
 

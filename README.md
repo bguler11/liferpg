@@ -37,7 +37,11 @@ npm run deploy                   # build + hosting + firestore.rules
 Yayın adresini telefonda aç, **Ana Ekrana Ekle** de. Uygulama tam ekran ve çevrimdışı çalışır;
 internet yokken işaretlediklerin bağlanınca senkronlanır.
 
-iOS'ta ana ekran uygulamasından Google girişi sorun çıkarırsa: önce Safari'de aç, giriş yap, sonra ana ekrana ekle.
+iOS'ta ana ekran uygulamasının deposu Safari'den ayrıdır: girişi uygulamanın kendi içinde
+yaparsın, Safari'de yapman işe yaramaz. Girişin takılmaması için `.env` içindeki
+`VITE_FIREBASE_AUTH_DOMAIN` konsoldaki `<proje>.firebaseapp.com` değil, sitenin kendi adı
+(`<proje>.web.app`) olmalı — böylece Google yönlendirmesi aynı kökende kalır ve Safari'nin
+izleme engeli araya girmez.
 
 ## 5. Tek dosyalı sürümden veri taşıma
 

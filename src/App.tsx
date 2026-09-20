@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { compute, defaults, migrate, type AppState, type Habit } from './logic';
 import { useSync, useToday } from './store';
+import { usePush } from './push';
 import { Character } from './components/Character';
 import { Hero } from './components/Hero';
 import { Login } from './components/Login';
@@ -13,6 +14,7 @@ import { Nav, type Tab } from './components/ui';
 export default function App() {
   const today = useToday();
   const { state, update, replace, user, status, signIn, signOut, authError, configured } = useSync(today);
+  const { push, enablePush, disablePush, setPushHour } = usePush(user?.uid ?? null);
   const [tab, setTab] = useState<Tab>('today');
   const [sheet, setSheet] = useState<string | null>(null);
   const C = useMemo(() => compute(state, today), [state, today]);
@@ -74,6 +76,10 @@ export default function App() {
               }}
               onReset={() => { replace(defaults(today)); setTab('today'); }}
               onSignOut={() => { void signOut(); }}
+              push={push}
+              onPushOn={() => { void enablePush(); }}
+              onPushOff={() => { void disablePush(); }}
+              onPushHour={(h) => { void setPushHour(h); }}
             />
           )}
         </div>

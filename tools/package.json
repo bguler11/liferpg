@@ -1,0 +1,9 @@
+{
+  "name": "life-rpg-reminders",
+  "private": true,
+  "type": "module",
+  "description": "GitHub Actions'ın çalıştırdığı hatırlatma göndericisi",
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
+  }
+}

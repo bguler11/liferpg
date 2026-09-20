@@ -26,9 +26,20 @@ export default defineConfig({
       },
       workbox: {
         // Firebase Auth'un /__/auth/ yollarını service worker yakalamasın
-        navigateFallbackDenylist: [/^\/__\//]
+        navigateFallbackDenylist: [/^\/__\//],
+        // Bildirim worker'ı ayrı kapsamda çalışır; önbelleğe alınırsa eskir
+        globIgnores: ['**/node_modules/**/*', '**/push-sw.js']
       }
     })
   ],
-  test: { environment: 'node' }
+  // Testler .env'den bağımsız olsun: uygulama yerel modda render edilir.
+  test: {
+    environment: 'node',
+    env: {
+      VITE_FIREBASE_API_KEY: '',
+      VITE_FIREBASE_PROJECT_ID: '',
+      VITE_FIREBASE_APP_ID: '',
+      VITE_FIREBASE_VAPID_KEY: ''
+    }
+  }
 });

@@ -14,7 +14,7 @@ const cfg = {
 /** .env doldurulmamışsa uygulama yerel modda (localStorage) çalışır. */
 export const configured = Boolean(cfg.apiKey && cfg.projectId && cfg.appId);
 
-const app = configured ? initializeApp(cfg) : null;
+export const app = configured ? initializeApp(cfg) : null;
 export const auth = app ? getAuth(app) : null;
 // Çevrimdışı önbellek: internet yokken de işaretleyebilirsin, bağlanınca senkronlanır.
 export const db = app

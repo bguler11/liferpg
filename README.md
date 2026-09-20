@@ -53,6 +53,7 @@ Buradaki **Ayar > YEDEK / TAŞIMA** kutusuna yapıştır > **İÇE AKTAR**. Seri
 | `npm run build` | Tip kontrolü + üretim derlemesi |
 | `npm run deploy` | Build + Firebase deploy |
 | `python3 scripts/make-icons.py` | PWA ikonlarını yeniden üretir |
+| `node tools/send-reminders.mjs --dry-run` | Hatırlatmanın kime gideceğini gösterir (gönderme yok) |
 
 ## Yapı
 
@@ -60,12 +61,37 @@ Buradaki **Ayar > YEDEK / TAŞIMA** kutusuna yapıştır > **İÇE AKTAR**. Seri
 src/logic.ts        oyun kuralları (saf fonksiyonlar)
 src/store.ts        Firebase Auth + Firestore canlı senkron (çevrimdışı önbellekli)
 src/sprite.ts       seviyeye göre değişen pixel karakter
+src/push.ts         bildirim izni + cihaz token'ı (Firestore: users/{uid}/push)
+public/push-sw.js   arka plan bildirimi (ayrı kapsam, PWA worker'ına dokunmaz)
+tools/              GitHub Actions'ın çalıştırdığı hatırlatma göndericisi
 src/components/     Today, Character, MapView, Settings, Overlays, Login
 firestore.rules     kullanıcı bazlı erişim kuralları
 ```
 
+## 6. Telefona hatırlatma bildirimi (isteğe bağlı)
+
+Akşam çekirdek görevlerin bitmediyse telefona bildirim düşer; bittiyse düşmez.
+Gönderimi ücretsiz GitHub Actions cron'u yapar, Blaze planı gerekmez.
+
+1. **Console > Project settings > Cloud Messaging > Web Push certificates > Generate key pair**.
+   Çıkan genel anahtarı `.env` içine `VITE_FIREBASE_VAPID_KEY=` olarak yaz, yeniden deploy et.
+2. **Console > Project settings > Service accounts > Generate new private key**: inen JSON'u
+   GitHub'da **Settings > Secrets and variables > Actions > New repository secret** ile
+   `FIREBASE_SERVICE_ACCOUNT` adıyla kaydet (dosyanın tamamını yapıştır).
+3. Uygulamada **Ayar > HATIRLATMA > BU CİHAZDA AÇ**, saati seç. Her cihaz için ayrı açılır.
+4. Denemek için Actions sekmesinde **Hatırlatma gönder > Run workflow** (dry run seçeneğiyle
+   kime gideceğini bildirim atmadan görebilirsin).
+
+Bilinmesi gerekenler:
+
+- **iPhone**: bildirim yalnızca uygulama **Ana Ekrana Ekle** ile kurulmuşsa çalışır (iOS 16.4+).
+  Safari sekmesinde açıkken bildirim gelmez. Android'de böyle bir kısıt yok.
+- GitHub cron'u yoğun saatlerde birkaç dakika gecikebilir; script hedef saatten sonraki
+  3 saatlik pencerede hâlâ gönderir ve aynı gün ikinci kez göndermez.
+- Depoda 60 gün hiç hareket olmazsa GitHub zamanlanmış işi durdurur, Actions sekmesinden
+  tek tıkla geri açılır.
+
 ## Sıradaki adımlar (henüz yok)
 
-- **Push hatırlatma**: FCM + zamanlanmış Cloud Function. Blaze planı (kredi kartı) gerektirir.
 - **Gardırop**: ekipman slotları, sandıktan eşya, renk varyantları.
 - **Boss görevleri** ve haftalık gözden geçirme ekranı.

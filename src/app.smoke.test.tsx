@@ -37,10 +37,13 @@ describe('arayüz duman testi', () => {
     expect(map).toContain('KİLOMETRE TAŞLARI');
     const set = renderToString(
       <Settings state={s} today={TODAY} email="a@b.c" status="synced" onMode={noop} onStartDate={noop} onStartToday={noop}
-        onName={noop} onHabit={noop} onAddHabit={noop} onDelHabit={noop} onImport={() => true} onReset={noop} onSignOut={noop} />
+        onName={noop} onHabit={noop} onAddHabit={noop} onDelHabit={noop} onImport={() => true} onReset={noop} onSignOut={noop}
+        push={{ supported: true, on: true, hour: 20, blocked: false, busy: false, error: null }}
+        onPushOn={noop} onPushOff={noop} onPushHour={noop} />
     );
     expect(set).toContain('Bulutla senkron');
     expect(set).toContain('a@b.c');
+    expect(set).toContain('HATIRLATMA');
   });
   it('Sheet ve rapor penceresi', () => {
     const sheet = renderToString(<Sheet habit={s.habits[0]} current={2} state={s} onSet={noop} onClose={noop} />);

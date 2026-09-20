@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { STAT, STAT_KEYS, type AppState, type Habit, type StatKey } from '../logic';
 import type { SyncStatus } from '../store';
+import { pushConfigured, type PushState } from '../push';
 import { rulesText } from './Today';
 
 function TextField({ label, value, onCommit, max = 120 }: { label: string; value: string; onCommit: (v: string) => void; max?: number }) {
@@ -27,6 +28,10 @@ interface Props {
   onImport: (json: string) => boolean;
   onReset: () => void;
   onSignOut: () => void;
+  push: PushState;
+  onPushOn: () => void;
+  onPushOff: () => void;
+  onPushHour: (h: number) => void;
 }
 
 const STATUS_TXT: Record<SyncStatus, string> = {
@@ -102,6 +107,11 @@ export function Settings(p: Props) {
       </div>
 
       <div className="panel banner">
+        <b>HATIRLATMA</b>
+        <PushPanel {...p} />
+      </div>
+
+      <div className="panel banner">
         <b>YEDEK / TAŞIMA</b>
         <textarea
           value={backup}
@@ -117,6 +127,45 @@ export function Settings(p: Props) {
 
       <button className="btn danger" onClick={armed('reset', p.onReset)}>
         {arm === 'reset' ? 'TÜM İLERLEME SİLİNECEK. TEKRAR DOKUN' : 'HER ŞEYİ SIFIRLA'}
+      </button>
+    </>
+  );
+}
+
+const HOURS = [7, 8, 9, 12, 18, 19, 20, 21, 22, 23];
+
+function PushPanel(p: Props) {
+  const { push } = p;
+  const hourSel = (
+    <label className="field">
+      <span>Saat (kendi saat diliminde)</span>
+      <select value={push.hour} onChange={(e) => p.onPushHour(Number(e.target.value))}>
+        {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
+      </select>
+    </label>
+  );
+
+  if (!pushConfigured) return <span className="muted small">Bildirim anahtarı (VAPID) ayarlanmamış. .env dosyasına eklenince açılır.</span>;
+  if (push.supported === null) return <span className="muted small">Kontrol ediliyor…</span>;
+  if (push.supported === false)
+    return (
+      <span className="muted small">
+        Bu tarayıcı bildirim göndermiyor. iPhone'da çalışması için uygulamayı <b>Ana Ekrana Ekle</b> ile kurup oradan aç.
+      </span>
+    );
+
+  return (
+    <>
+      <span className="muted small">
+        {push.on
+          ? 'Açık. Günün çekirdek görevleri bitmediyse hatırlatma gelir; bittiyse gelmez.'
+          : 'Akşam görevlerini unutursan telefonuna bildirim gelsin.'}
+      </span>
+      {hourSel}
+      {push.blocked && <span className="orange small">Bildirimler tarayıcı ayarlarından engellenmiş. Site ayarlarından izin verip tekrar dene.</span>}
+      {push.error && <span className="orange small">{push.error}</span>}
+      <button className={'btn ' + (push.on ? 'alt' : '')} disabled={push.busy} onClick={push.on ? p.onPushOff : p.onPushOn}>
+        {push.busy ? 'BEKLE…' : push.on ? 'BU CİHAZDA KAPAT' : 'BU CİHAZDA AÇ'}
       </button>
     </>
   );

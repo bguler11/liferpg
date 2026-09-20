@@ -16,6 +16,8 @@ const DEFAULT_TZ = 'Europe/Istanbul';
 /** Actions cron'u gecikebilir; hedef saatten sonraki bu kadar saat içinde hâlâ gönder. */
 const WINDOW = 3;
 const DRY = process.argv.includes('--dry-run');
+/** Deneme: saat penceresini, "bugün gönderildi" kaydını ve "gereği var mı" kontrolünü atlar. */
+const FORCE = process.argv.includes('--force');
 
 const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
 if (!raw) {
@@ -116,28 +118,46 @@ for (const docSnap of snap.docs) {
   const target = typeof p.hour === 'number' ? p.hour : DEFAULT_HOUR;
   const { date, hour } = localNow(tz);
 
-  if (hour < target || hour >= target + WINDOW) { skipped++; continue; }
-  if (p.lastSentDate === date) { skipped++; continue; }
+  if (!FORCE) {
+    if (hour < target || hour >= target + WINDOW) {
+      console.log(`${uid.slice(0, 6)}… atlandı: yerel saat ${hour}, hedef ${target}`);
+      skipped++;
+      continue;
+    }
+    if (p.lastSentDate === date) {
+      console.log(`${uid.slice(0, 6)}… atlandı: bugün zaten gönderilmiş`);
+      skipped++;
+      continue;
+    }
+  }
 
   const state = (await db.doc(`users/${uid}/app/state`).get()).data();
   const st = todayStatus(state, date);
-  if (!st || st.notStarted || st.finished || st.left.length === 0) {
-    await docSnap.ref.update({ lastSentDate: date, lastResult: 'gerek yok' });
+  const nothingToDo = !st || st.notStarted || st.finished || st.left.length === 0;
+
+  let m;
+  if (nothingToDo && FORCE) {
+    m = { title: 'Life RPG · deneme', body: 'Bildirimler çalışıyor. Gerçek hatırlatma, günün görevleri bitmediğinde gelir.' };
+  } else if (nothingToDo) {
+    const why = !st ? 'veri yok' : st.notStarted ? 'program başlamadı' : st.finished ? '66 gün bitti' : 'görevler tamam';
+    console.log(`${uid.slice(0, 6)}… atlandı: ${why}`);
+    if (!DRY && !st?.notStarted) await docSnap.ref.update({ lastSentDate: date, lastResult: 'gerek yok: ' + why });
     skipped++;
     continue;
+  } else {
+    m = message(st, state?.name);
   }
 
-  const m = message(st, state?.name);
   console.log(`${uid.slice(0, 6)}… ${tz} ${date} ${hour}:00 → ${m.title}`);
   if (DRY) { sent++; continue; }
 
   try {
     await getMessaging().send({
       token: p.token,
-      data: { title: m.title, body: m.body, url: '/', tag: 'liferpg-' + date },
+      data: { title: m.title, body: m.body, url: '/', tag: FORCE ? 'liferpg-test' : 'liferpg-' + date },
       webpush: { headers: { Urgency: 'high', TTL: '7200' } }
     });
-    await docSnap.ref.update({ lastSentDate: date, lastResult: 'gönderildi' });
+    if (!FORCE) await docSnap.ref.update({ lastSentDate: date, lastResult: 'gönderildi' });
     sent++;
   } catch (e) {
     const code = e?.errorInfo?.code || e?.code || '';
@@ -150,4 +170,5 @@ for (const docSnap of snap.docs) {
     }
   }
 }
-console.log(`bitti — gönderilen ${sent}, atlanan ${skipped}, silinen token ${dropped}${DRY ? ' (kuru çalışma)' : ''}`);
+const mod = [DRY ? 'kuru çalışma' : null, FORCE ? 'zorlama' : null].filter(Boolean).join(', ');
+console.log(`bitti — gönderilen ${sent}, atlanan ${skipped}, silinen token ${dropped}${mod ? ' (' + mod + ')' : ''}`);

@@ -80,8 +80,9 @@ Gönderimi ücretsiz GitHub Actions cron'u yapar, Blaze planı gerekmez.
    GitHub'da **Settings > Secrets and variables > Actions > New repository secret** ile
    `FIREBASE_SERVICE_ACCOUNT` adıyla kaydet (dosyanın tamamını yapıştır).
 3. Uygulamada **Ayar > HATIRLATMA > BU CİHAZDA AÇ**, saati seç. Her cihaz için ayrı açılır.
-4. Denemek için Actions sekmesinde **Hatırlatma gönder > Run workflow** (dry run seçeneğiyle
-   kime gideceğini bildirim atmadan görebilirsin).
+4. Denemek için Actions sekmesinde **Hatırlatma gönder > Run workflow**. İki seçenek var:
+   *dry run* kime gideceğini bildirim atmadan yazar, *force* ise saati ve "bugün
+   gönderildi" kaydını yok sayıp hemen deneme bildirimi atar.
 
 Bilinmesi gerekenler:
 

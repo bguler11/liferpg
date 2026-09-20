@@ -8,7 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Sadece kimlere gideceğini yaz, bildirim gönderme'
+        description: 'Kuru çalışma: kime gideceğini yaz, bildirim gönderme'
+        type: boolean
+        default: false
+      force:
+        description: 'Deneme: saati ve "bugün gönderildi" kaydını yok say, hemen gönder'
         type: boolean
         default: false
 
@@ -27,7 +31,15 @@ jobs:
           node-version: '22'
       - run: npm install --omit=dev --no-audit --no-fund
         working-directory: tools
-      - run: node send-reminders.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Hatırlatmaları gönder
         working-directory: tools
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DRY: ${{ inputs.dry_run }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          args=""
+          if [ "$DRY" = "true" ]; then args="$args --dry-run"; fi
+          if [ "$FORCE" = "true" ]; then args="$args --force"; fi
+          echo "node send-reminders.mjs$args"
+          node send-reminders.mjs $args
